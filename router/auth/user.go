@@ -19,7 +19,7 @@ type SignUpForm struct {
 }
 
 func SignUp(c *gin.Context) {
-	if common.CheckLogin(c) {
+	if _, ok := common.CheckLogin(c); ok {
 		c.JSON(http.StatusOK, gin.H{
 			"statusCode": 2,
 			"msg":        "redirect",
@@ -91,7 +91,7 @@ func validateForm(form SignUpForm) error {
 }
 
 func SignIn(c *gin.Context) {
-	if common.CheckLogin(c) {
+	if _, ok := common.CheckLogin(c); ok {
 		c.JSON(http.StatusOK, gin.H{
 			"statusCode": 2,
 			"msg":        "redirect",
