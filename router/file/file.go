@@ -73,7 +73,7 @@ func GetFileList(c *gin.Context) {
 		return
 	}
 	for _, file := range fileInfo {
-		fileItem := entity.File{Name: file.Name(), Path: constants.FilePath + file.Name(), Size: file.Size(), ModTime: file.ModTime().Unix()}
+		fileItem := entity.File{Name: file.Name(), Path: constants.FilePath + user.Id.Hex() + "/" + file.Name(), Size: file.Size(), ModTime: file.ModTime().Unix()}
 		fileList = append(fileList, fileItem)
 	}
 	c.JSON(http.StatusOK, gin.H{
