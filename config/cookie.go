@@ -1,6 +1,6 @@
 package config
 
 var Cookie = map[string]string{
-	"name": "uid",
+	"name":   "uid",
 	"domain": "www.shechuan.me",
 }

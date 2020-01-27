@@ -61,7 +61,7 @@ func SignUp(c *gin.Context) {
 	user.Name = form.Name
 	user.Password = string(hashPwd)
 	config.Session.DB("filemanager").C("users").Insert(user)
-	c.SetCookie(config.Cookie["name"], user.Id.Hex(), 3600, "/", config.Cookie["domain"], false, false)
+	// c.SetCookie(config.Cookie["name"], user.Id.Hex(), 3600, "/", config.Cookie["domain"], false, false)
 	c.JSON(http.StatusCreated, gin.H{
 		"statusCode": 2,
 		"msg":        "success",
@@ -168,7 +168,7 @@ func GetUserInfo(c *gin.Context) {
 	user := entity.User{}
 	err := config.Session.DB("filemanager").C("users").FindId(bson.ObjectIdHex(params.Uid)).One(&user)
 	if err != nil {
-		fmt.Println(err)
+		c.SetCookie(config.Cookie["name"], "", -1, "/", config.Cookie["domain"], false, false)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
