@@ -14,7 +14,7 @@ func CheckLogin(c *gin.Context) (entity.User, bool) {
 		return user, false
 	}
 	if !bson.IsObjectIdHex(cookie) {
-		c.SetCookie(config.Cookie["name"], "", -1, "/", config.Cookie["domain"], false, false)
+		c.SetCookie(config.Conf.CookieName, "", -1, "/", config.Conf.CookieDomain, false, false)
 		return user, false
 	}
 	err = config.Session.DB("filemanager").C("users").FindId(bson.ObjectIdHex(cookie)).One(&user)

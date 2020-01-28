@@ -7,8 +7,8 @@ import (
 	"os"
 
 	"../../common"
-	"../../constants"
 	"../../entity"
+	"../../config"
 	"github.com/gin-gonic/gin"
 )
 
@@ -29,7 +29,7 @@ func UploadFile(c *gin.Context) {
 		c.String(http.StatusBadRequest, fmt.Sprintf("get form err: %s", err.Error()))
 		return
 	}
-	dir := constants.StaticPath + user.Id.Hex()
+	dir := config.Conf.StaticPath + user.Id.Hex()
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
 		err = os.Mkdir(dir, os.ModePerm)
 	}
@@ -61,7 +61,7 @@ func GetFileList(c *gin.Context) {
 		})
 		return
 	}
-	fileInfo, err := ioutil.ReadDir(constants.StaticPath + user.Id.Hex())
+	fileInfo, err := ioutil.ReadDir(config.Conf.StaticPath + user.Id.Hex())
 	var fileList []entity.File
 	if err != nil {
 		fmt.Println("Read Dir error", err.Error())
@@ -73,7 +73,7 @@ func GetFileList(c *gin.Context) {
 		return
 	}
 	for _, file := range fileInfo {
-		fileItem := entity.File{Name: file.Name(), Path: constants.FilePath + user.Id.Hex() + "/" + file.Name(), Size: file.Size(), ModTime: file.ModTime().Unix()}
+		fileItem := entity.File{Name: file.Name(), Path: config.Conf.FilePath + user.Id.Hex() + "/" + file.Name(), Size: file.Size(), ModTime: file.ModTime().Unix()}
 		fileList = append(fileList, fileItem)
 	}
 	c.JSON(http.StatusOK, gin.H{
@@ -106,7 +106,7 @@ func DeleteFile(c *gin.Context) {
 		return
 	}
 	for _, name := range params.Names {
-		deleteErr := os.Remove(constants.StaticPath + user.Id.Hex() + "/" + name)
+		deleteErr := os.Remove(config.Conf.StaticPath + user.Id.Hex() + "/" + name)
 		if deleteErr != nil {
 			fmt.Println("delete file err", deleteErr.Error())
 		}

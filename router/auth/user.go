@@ -4,6 +4,7 @@ import (
 	"../../common"
 	"../../config"
 	"../../entity"
+	
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/globalsign/mgo/bson"
@@ -61,7 +62,7 @@ func SignUp(c *gin.Context) {
 	user.Name = form.Name
 	user.Password = string(hashPwd)
 	config.Session.DB("filemanager").C("users").Insert(user)
-	// c.SetCookie(config.Cookie["name"], user.Id.Hex(), 3600, "/", config.Cookie["domain"], false, false)
+	// c.SetCookie(config.Conf.CookieName, user.Id.Hex(), 3600, "/", config.Conf.CookieDomain, false, false)
 	c.JSON(http.StatusCreated, gin.H{
 		"statusCode": 2,
 		"msg":        "success",
@@ -115,7 +116,7 @@ func SignIn(c *gin.Context) {
 			})
 			return
 		}
-		c.SetCookie(config.Cookie["name"], user.Id.Hex(), 3600, "/", config.Cookie["domain"], false, false)
+		c.SetCookie(config.Conf.CookieName, user.Id.Hex(), 3600, "/", config.Conf.CookieDomain, false, false)
 		c.JSON(http.StatusOK, gin.H{
 			"statusCode": 2,
 			"msg":        "redirect",
@@ -141,7 +142,7 @@ func LogOut(c *gin.Context) {
 		c.String(http.StatusOK, "current cookie info error!")
 		return
 	}
-	c.SetCookie(config.Cookie["name"], "", -1, "/", config.Cookie["domain"], false, false)
+	c.SetCookie(config.Conf.CookieName, "", -1, "/", config.Conf.CookieDomain, false, false)
 	c.JSON(http.StatusOK, gin.H{
 		"statusCode": 2,
 		"msg":        "redirect",
@@ -162,13 +163,13 @@ func GetUserInfo(c *gin.Context) {
 		return
 	}
 	if !bson.IsObjectIdHex(params.Uid) {
-		c.SetCookie(config.Cookie["name"], "", -1, "/", config.Cookie["domain"], false, false)
+		c.SetCookie(config.Conf.CookieName, "", -1, "/", config.Conf.CookieDomain, false, false)
 		return
 	}
 	user := entity.User{}
 	err := config.Session.DB("filemanager").C("users").FindId(bson.ObjectIdHex(params.Uid)).One(&user)
 	if err != nil {
-		c.SetCookie(config.Cookie["name"], "", -1, "/", config.Cookie["domain"], false, false)
+		c.SetCookie(config.Conf.CookieName, "", -1, "/", config.Conf.CookieDomain, false, false)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}

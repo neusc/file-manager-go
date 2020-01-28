@@ -5,10 +5,9 @@ import (
 	"net/http"
 	"time"
 
-	"../constants"
 	fm "./file"
 	"./auth"
-	_ "../config"
+	"../config"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-contrib/cors"
 )
@@ -37,7 +36,7 @@ func InitRouter() {
 		file.POST("/list", fm.GetFileList)
 		file.POST("/delete", fm.DeleteFile)
 	}
-	r.StaticFS("/", http.Dir(constants.StaticPath))
-	r.Run(constants.StaticPort)
-	log.Printf("listening on %s...", constants.StaticPort)
+	r.StaticFS("/", http.Dir(config.Conf.StaticPath))
+	r.Run(config.Conf.StaticPort)
+	log.Printf("listening on %s...", config.Conf.StaticPort)
 }

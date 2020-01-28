@@ -1,11 +1,5 @@
 package entity
 
-type StaticConfiguration struct {
-	StaticPort string
-	StaticPath string
-	FilePath   string
-}
-
 type File struct {
 	Name    string `json:"name"`
 	Path    string `json:"path"`
