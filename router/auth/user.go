@@ -14,8 +14,8 @@ import (
 )
 
 type SignUpForm struct {
-	Name       string `json:"name" validate:"min=5,max=20"`
-	Password   string `json:"password" validate:"min=6,max=12"`
+	Name       string `json:"name" validate:"min=3,max=8"`
+	Password   string `json:"password" validate:"min=6"`
 	Repassword string `json:"repassword" validate:"eqfield=Password"`
 }
 
@@ -84,7 +84,7 @@ func validateForm(form SignUpForm) error {
 		for _, err := range err.(validator.ValidationErrors) {
 			fmt.Println(err.Field())
 			fmt.Println(err.Value())
-			fmt.Print(err.Tag())
+			fmt.Print(err.Tag() + "\n")
 		}
 		return err
 	}
