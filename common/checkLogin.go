@@ -5,52 +5,31 @@ import (
 	"../entity"
 	"github.com/gin-gonic/gin"
 	"github.com/globalsign/mgo/bson"
-	"github.com/satori/go.uuid"
 	"time"
 )
 
-func GetUser(c *gin.Context) entity.User {
-	cookie, err := c.Cookie("filemanager")
-	value := cookie
-	if err != nil {
-		sID, _ := uuid.NewV4()
-		value = sID.String()
-	}
-	c.SetCookie(config.Conf.CookieName, value, entity.SessionLength, "/", config.Conf.CookieDomain, false, false)
-
+func GetLoginInfo(c *gin.Context) (entity.User, bool) {
 	var user entity.User
-	var session entity.Session
-	err = config.Session.DB("filemanager").C("sessions").Find(bson.M{"id": value}).One(&session)
-	if err != nil {
-		return user
-	}
-	session.LastActivity = time.Now()
-	config.Session.DB("filemanager").C("sessions").Update(bson.M{"id": value}, session)
-	config.Session.DB("filemanager").C("users").Find(bson.M{"name": session.UserName}).One(&user)
-	return user
-}
-
-func CheckLogin(c *gin.Context) bool {
 	cookie, err := c.Cookie("filemanager")
 	if err != nil {
-		return false
+		return user, false
 	}
 	var session entity.Session
 	err = config.Session.DB("filemanager").C("sessions").Find(bson.M{"id": cookie}).One(&session)
 	if err != nil {
-		return false
+		// reset valid cookie
+		c.SetCookie(config.Conf.CookieName, "", -1, "/", config.Conf.CookieDomain, false, false)
+		return user, false
 	}
 	session.LastActivity = time.Now()
 	config.Session.DB("filemanager").C("sessions").Update(bson.M{"id": cookie}, session)
-
-	var user entity.User
 	err = config.Session.DB("filemanager").C("users").Find(bson.M{"name": session.UserName}).One(&user)
 	if err != nil {
-		return false
+		return user, false
 	}
 	// refresh session
 	c.SetCookie(config.Conf.CookieName, cookie, entity.SessionLength, "/", config.Conf.CookieDomain, false, false)
-	return true
+	return user, true
 }
 
 func CleanSessions() {

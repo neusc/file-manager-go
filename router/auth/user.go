@@ -22,7 +22,7 @@ type SignUpForm struct {
 }
 
 func SignUp(c *gin.Context) {
-	if common.CheckLogin(c) {
+	if _, ok := common.GetLoginInfo(c); ok {
 		c.JSON(http.StatusOK, gin.H{
 			"statusCode": 2,
 			"msg":        "redirect",
@@ -93,7 +93,7 @@ func validateForm(form SignUpForm) error {
 }
 
 func SignIn(c *gin.Context) {
-	if common.CheckLogin(c) {
+	if _, ok := common.GetLoginInfo(c); ok {
 		c.JSON(http.StatusOK, gin.H{
 			"statusCode": 2,
 			"msg":        "redirect",
@@ -142,7 +142,7 @@ func SignIn(c *gin.Context) {
 }
 
 func LogOut(c *gin.Context) {
-	if !common.CheckLogin(c) {
+	if _, ok := common.GetLoginInfo(c); !ok {
 		c.JSON(http.StatusOK, gin.H{
 			"statusCode": 2,
 			"msg":        "redirect",
@@ -171,7 +171,8 @@ type userInfo struct {
 
 // GetUserInfo return userInfo
 func GetUserInfo(c *gin.Context) {
-	if !common.CheckLogin(c) {
+	user, ok := common.GetLoginInfo(c);
+	if !ok {
 		c.JSON(http.StatusOK, gin.H{
 			"statusCode": 2,
 			"msg":        "redirect",
@@ -179,7 +180,6 @@ func GetUserInfo(c *gin.Context) {
 		})
 		return
 	}
-	user := common.GetUser(c)
 	cookie, _ := c.Cookie("filemanager")
 	params := userInfo{
 		SessionID: cookie,

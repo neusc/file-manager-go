@@ -4,7 +4,7 @@ import "time"
 
 const SessionLength = 10 * 60
 
-const SessionCleanInterval = 10
+const SessionCleanInterval = 5 * 60
 
 var SessionCleaned time.Time
 

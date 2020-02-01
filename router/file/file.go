@@ -13,7 +13,8 @@ import (
 )
 
 func UploadFile(c *gin.Context) {
-	if !common.CheckLogin(c) {
+	user, ok := common.GetLoginInfo(c);
+	if !ok {
 		c.JSON(http.StatusOK, gin.H{
 			"statusCode": 2,
 			"msg":        "redirect",
@@ -21,7 +22,6 @@ func UploadFile(c *gin.Context) {
 		})
 		return
 	}
-	user := common.GetUser(c)
 	c.Request.ParseMultipartForm(32 << 20)
 	form, err := c.MultipartForm()
 	if err != nil {
@@ -50,7 +50,8 @@ func UploadFile(c *gin.Context) {
 }
 
 func GetFileList(c *gin.Context) {
-	if !common.CheckLogin(c) {
+	user, ok := common.GetLoginInfo(c);
+	if !ok {
 		c.JSON(http.StatusOK, gin.H{
 			"statusCode": 2,
 			"msg":        "redirect",
@@ -58,7 +59,6 @@ func GetFileList(c *gin.Context) {
 		})
 		return
 	}
-	user := common.GetUser(c)
 	fileInfo, err := ioutil.ReadDir(config.Conf.StaticPath + user.Id.Hex())
 	var fileList []entity.File
 	if err != nil {
@@ -88,7 +88,8 @@ type deleteParams struct {
 }
 
 func DeleteFile(c *gin.Context) {
-	if !common.CheckLogin(c) {
+	user, ok := common.GetLoginInfo(c);
+	if !ok {
 		c.JSON(http.StatusOK, gin.H{
 			"statusCode": 2,
 			"msg":        "redirect",
@@ -96,7 +97,6 @@ func DeleteFile(c *gin.Context) {
 		})
 		return
 	}
-	user := common.GetUser(c)
 	var params deleteParams
 	if err := c.ShouldBindJSON(&params); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
