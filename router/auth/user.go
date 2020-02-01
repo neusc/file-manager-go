@@ -4,13 +4,15 @@ import (
 	"../../common"
 	"../../config"
 	"../../entity"
-	
+
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/globalsign/mgo/bson"
+	"github.com/satori/go.uuid"
 	"golang.org/x/crypto/bcrypt"
 	"gopkg.in/go-playground/validator.v9"
 	"net/http"
+	"time"
 )
 
 type SignUpForm struct {
@@ -20,7 +22,7 @@ type SignUpForm struct {
 }
 
 func SignUp(c *gin.Context) {
-	if _, ok := common.CheckLogin(c); ok {
+	if common.CheckLogin(c) {
 		c.JSON(http.StatusOK, gin.H{
 			"statusCode": 2,
 			"msg":        "redirect",
@@ -44,7 +46,7 @@ func SignUp(c *gin.Context) {
 		return
 	}
 
-	user := entity.User{}
+	var user entity.User
 	err = config.Session.DB("filemanager").C("users").Find(bson.M{"name": form.Name}).One(&user)
 	// user existed
 	if err == nil {
@@ -62,7 +64,6 @@ func SignUp(c *gin.Context) {
 	user.Name = form.Name
 	user.Password = string(hashPwd)
 	config.Session.DB("filemanager").C("users").Insert(user)
-	// c.SetCookie(config.Conf.CookieName, user.Id.Hex(), 3600, "/", config.Conf.CookieDomain, false, false)
 	c.JSON(http.StatusCreated, gin.H{
 		"statusCode": 2,
 		"msg":        "success",
@@ -92,7 +93,7 @@ func validateForm(form SignUpForm) error {
 }
 
 func SignIn(c *gin.Context) {
-	if _, ok := common.CheckLogin(c); ok {
+	if common.CheckLogin(c) {
 		c.JSON(http.StatusOK, gin.H{
 			"statusCode": 2,
 			"msg":        "redirect",
@@ -107,73 +108,83 @@ func SignIn(c *gin.Context) {
 	}
 	var user entity.User
 	err := config.Session.DB("filemanager").C("users").Find(bson.M{"name": form.Name}).One(&user)
-	if err == nil {
-		err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(form.Password))
-		if err != nil {
-			c.JSON(http.StatusOK, gin.H{
-				"statusCode": 1,
-				"msg":        "password is not correct!",
-			})
-			return
-		}
-		c.SetCookie(config.Conf.CookieName, user.Id.Hex(), 3600, "/", config.Conf.CookieDomain, false, false)
+	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
-			"statusCode": 2,
-			"msg":        "redirect",
-			"data":       "list",
+			"statusCode": 1,
+			"msg":        "user don't exist! please go to sign up!",
 		})
 		return
 	}
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(form.Password))
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"statusCode": 1,
+			"msg":        "password is not correct!",
+		})
+		return
+	}
+	// create session
+	sID, _ := uuid.NewV4()
+	c.SetCookie(config.Conf.CookieName, sID.String(), entity.SessionLength, "/", config.Conf.CookieDomain, false, false)
+	session := entity.Session{
+		Id:           sID.String(),
+		UserName:     form.Name,
+		LastActivity: time.Now(),
+	}
+	// store session
+	config.Session.DB("filemanager").C("sessions").Insert(session)
+
 	c.JSON(http.StatusOK, gin.H{
-		"statusCode": 1,
-		"msg":        "user don't exist! please go to sign up!",
+		"statusCode": 2,
+		"msg":        "redirect",
+		"data":       "list",
 	})
 }
 
 func LogOut(c *gin.Context) {
-	cookie, err := c.Cookie("uid")
-	if err != nil {
-		c.String(http.StatusOK, "current user is not login!")
+	if !common.CheckLogin(c) {
+		c.JSON(http.StatusOK, gin.H{
+			"statusCode": 2,
+			"msg":        "redirect",
+			"data":       "signin",
+		})
 		return
 	}
-	user := entity.User{}
-	err = config.Session.DB("filemanager").C("users").FindId(bson.ObjectIdHex(cookie)).One(&user)
-	if err != nil {
-		c.String(http.StatusOK, "current cookie info error!")
-		return
-	}
+	cookie, _ := c.Cookie("filemanager")
+	config.Session.DB("filemanager").C("sessions").Remove(bson.M{"id": cookie})
 	c.SetCookie(config.Conf.CookieName, "", -1, "/", config.Conf.CookieDomain, false, false)
+	// clean dbSessions
+	if time.Now().Sub(entity.SessionCleaned) > (time.Second * entity.SessionCleanInterval) {
+		go common.CleanSessions()
+	}
 	c.JSON(http.StatusOK, gin.H{
 		"statusCode": 2,
 		"msg":        "redirect",
 		"data":       "signin",
 	})
-
 }
 
-type UserInfo struct {
-	Uid  string `json:"uid"`
-	Name string `json:"name"`
+type userInfo struct {
+	SessionID  string `json:"sessionid"`
+	Name       string `json:"name"`
 }
 
+// GetUserInfo return userInfo
 func GetUserInfo(c *gin.Context) {
-	var params UserInfo
-	if err := c.ShouldBindJSON(&params); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	if !common.CheckLogin(c) {
+		c.JSON(http.StatusOK, gin.H{
+			"statusCode": 2,
+			"msg":        "redirect",
+			"data":       "signin",
+		})
 		return
 	}
-	if !bson.IsObjectIdHex(params.Uid) {
-		c.SetCookie(config.Conf.CookieName, "", -1, "/", config.Conf.CookieDomain, false, false)
-		return
+	user := common.GetUser(c)
+	cookie, _ := c.Cookie("filemanager")
+	params := userInfo{
+		SessionID: cookie,
+		Name: user.Name,
 	}
-	user := entity.User{}
-	err := config.Session.DB("filemanager").C("users").FindId(bson.ObjectIdHex(params.Uid)).One(&user)
-	if err != nil {
-		c.SetCookie(config.Conf.CookieName, "", -1, "/", config.Conf.CookieDomain, false, false)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-	params.Name = user.Name
 	c.JSON(http.StatusOK, gin.H{
 		"statusCode": 0,
 		"msg":        "success",
