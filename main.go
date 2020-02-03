@@ -1,9 +1,8 @@
 package main
 
-import(
+import (
 	"./router"
 )
-
 
 func main() {
 	router.InitRouter()

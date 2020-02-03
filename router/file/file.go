@@ -7,13 +7,13 @@ import (
 	"os"
 
 	"../../common"
-	"../../entity"
 	"../../config"
+	"../../entity"
 	"github.com/gin-gonic/gin"
 )
 
 func UploadFile(c *gin.Context) {
-	user, ok := common.GetLoginInfo(c);
+	user, ok := common.GetLoginInfo(c)
 	if !ok {
 		c.JSON(http.StatusOK, gin.H{
 			"statusCode": 2,
@@ -50,7 +50,7 @@ func UploadFile(c *gin.Context) {
 }
 
 func GetFileList(c *gin.Context) {
-	user, ok := common.GetLoginInfo(c);
+	user, ok := common.GetLoginInfo(c)
 	if !ok {
 		c.JSON(http.StatusOK, gin.H{
 			"statusCode": 2,
@@ -88,7 +88,7 @@ type deleteParams struct {
 }
 
 func DeleteFile(c *gin.Context) {
-	user, ok := common.GetLoginInfo(c);
+	user, ok := common.GetLoginInfo(c)
 	if !ok {
 		c.JSON(http.StatusOK, gin.H{
 			"statusCode": 2,

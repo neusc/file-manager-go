@@ -165,13 +165,13 @@ func LogOut(c *gin.Context) {
 }
 
 type userInfo struct {
-	SessionID  string `json:"sessionid"`
-	Name       string `json:"name"`
+	SessionID string `json:"sessionid"`
+	Name      string `json:"name"`
 }
 
 // GetUserInfo return userInfo
 func GetUserInfo(c *gin.Context) {
-	user, ok := common.GetLoginInfo(c);
+	user, ok := common.GetLoginInfo(c)
 	if !ok {
 		c.JSON(http.StatusOK, gin.H{
 			"statusCode": 2,
@@ -183,7 +183,7 @@ func GetUserInfo(c *gin.Context) {
 	cookie, _ := c.Cookie("filemanager")
 	params := userInfo{
 		SessionID: cookie,
-		Name: user.Name,
+		Name:      user.Name,
 	}
 	c.JSON(http.StatusOK, gin.H{
 		"statusCode": 0,

@@ -5,11 +5,11 @@ import (
 	"net/http"
 	"time"
 
-	fm "./file"
-	"./auth"
 	"../config"
-	"github.com/gin-gonic/gin"
+	"./auth"
+	fm "./file"
 	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
 )
 
 func InitRouter() {
@@ -21,7 +21,7 @@ func InitRouter() {
 		AllowHeaders:     []string{"Origin", "Content-Type"},
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
-		MaxAge: 12 * time.Hour,
+		MaxAge:           12 * time.Hour,
 	}))
 	user := r.Group("user")
 	{
